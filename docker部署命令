@@ -1,0 +1,83 @@
+1.构建数据库镜像
+运行dockerfile,生成数据库镜像
+docker build -t fire-mysql:1.0 .
+
+
+docker run -d -e MYSQL_ROOT_PASSWORD=root --name fire-mysql -v /docker_volume/mysql/data:/var/lib/mysql -p 3306:3306 mysql 
+
+
+docker run -d -e MYSQL_ROOT_PASSWORD=root --name database -p 3306:3306 fire-mysql:1.0
+
+
+Mysql创建表文件替换码
+utf8_general_ci
+
+2.构建服务器镜像
+运行dockerfile,生成服务器镜像
+docker build -t fire-server:1.0 .
+
+
+创建网络，容器也使用这个网络，容器间就可以通信
+docker network create fire
+docker run -d -e MYSQL_ROOT_PASSWORD=root --name database --net fire -p 3306:3306 fire-mysql:1.0
+docker run -d --name renren -p 8080:8080 --net fire fire-server:1.0
+
+docker network connect my-bridge database
+docker network connect my-bridge renren
+
+
+容器中没有ping工具，运行以下指令
+apt-get update
+apt install iputils-ping
+
+容器中没有lsof工具，运行以下指令
+如果没有update过，需要先apt-get update
+apt-get install lsof
+
+修改jar包中的信息
+解压jar包，然后修改yml文件，再同步至jar包
+1，将jar包解压到当前目录
+jar xvf .\renren-fast.jar
+2，修改 BOOT-INF 中的application-prod.yml配置信息
+3，将修改后的文件替换 jar 包中的文件
+jar -uvf .\renren-fast.jar .\BOOT-INF\classes\application-prod.yml
+4，使用java -jar 启动项目 验证是否参数已经替换成功
+5,新打包
+-M 不创建 MANIFEST.MF 文件
+将当前目录下的所有文件压缩到 jar包中
+jar -cMf 新名字.jar * 
+将当前目录下的所有文件打包不压缩 jar包中
+jar -cMf0 新名字.jar *
+
+
+jdbc配置   5.7.3  使用  useSSL=false
+          8.0以上不需要 useSSL  默认应该就是true
+
+
+为了保证数据安全，需要让mysql数据挂载在宿主机上
+rm -rf ~/fire_docker
+mkdir ~/fire_docker
+mkdir ~/fire_docker/mysql
+mkdir ~/fire_docker/mysql/datas
+mkdir ~/fire_docker/mysql/conf
+mkdir ~/fire_docker/mysql/logs
+chmod -R 777 ~/fire_docker
+
+docker run -d -e MYSQL_ROOT_PASSWORD=root --name database --net fire -v ~/fire_docker/mysql/conf:/etc/mysql/conf.d -v ~/fire_docker/mysql/logs:/logs -v ~/fire_docker/mysql/datas:/var/lib/mysql  -p 3306:3306 fire-mysql:1.0
+
+
+
+docker commit -m "Fire database" -a "aodadou" fire-mysql:1.0
+
+需要让上传文件挂载在宿主机上
+mkdir ~/fire_docker/fileupload
+docker run -d --name renren -p 8080:8080 --net fire -v ~/fire_docker/uploadfile:/data-fire/fenghuo/uploadfile fire-server:1.0
+
+
+
+3.构建web镜像
+
+docker build -t fire-web:1.0 .
+
+
+
