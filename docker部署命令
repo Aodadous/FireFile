@@ -1,6 +1,6 @@
 1.构建数据库镜像
 运行dockerfile,生成数据库镜像
-docker build -t fire-mysql:1.0 .
+docker build -t aodadou/fire-mysql:1.0 .
 
 
 docker run -d -e MYSQL_ROOT_PASSWORD=root --name fire-mysql -v /docker_volume/mysql/data:/var/lib/mysql -p 3306:3306 mysql 
@@ -14,7 +14,9 @@ utf8_general_ci
 
 2.构建服务器镜像
 运行dockerfile,生成服务器镜像
-docker build -t fire-server:1.0 .
+docker build -t aodadou/fire-server:1.0 .
+
+docker commit -m "Fire server" -a "aodadou" aodadou/fire-server:1.0
 
 
 创建网络，容器也使用这个网络，容器间就可以通信
