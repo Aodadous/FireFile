@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+    database:
+        image: aodadou/fire-databse:1.0
+        container_name: database
+        ports:
+            - "3306:3306"
+        volumes:
+            - ~/fire_docker/mysql/conf:/etc/mysql/conf.d 
+            - ~/fire_docker/mysql/logs:/logs
+            - ~/fire_docker/mysql/datas:/var/lib/mysql
+        networks:
+            - fire
+
+    renren:
+        image: aodadou/fire-server:1.0
+        container_name: renren
+        ports:
+            - "8080:8080"
+        volumes:
+            - ~/fire_docker/fileupload:/data-fire/fenghuo/fileupload
+        depends_on:
+            - database
+        networks:
+            - fire
+    
+    web:
+        image: aodadou/fire-web:1.0
+        container_name: web
+        ports:
+            - "80:80"
+        depends_on:
+            - renren
+        networks:
+            - fire
+
+
+networks:
+    fire:
